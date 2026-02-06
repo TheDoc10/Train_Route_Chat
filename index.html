@@ -422,6 +422,7 @@
       <div class="row" style="margin-top:10px;">
         <!--<button id="undoBtn" disabled>Undo last</button>-->
         <button id="resetBtn">Reset</button>
+        <button id="returnBtn" disabled>Return Trip</button>
         <span class="pill" id="countPill">0 selected</span>
       </div>
 
@@ -547,7 +548,9 @@
         { name: "Kalokai", row: 12, col: 6 },
       ];
 
-      const UI = {
+        let lastCopiedBtn = null;
+
+const UI = {
         svg: document.getElementById("map"),
         routeLine: document.getElementById("routeLine"),
         msgList: document.getElementById("msgList"),
@@ -555,6 +558,7 @@
         status: document.getElementById("status"),
         countPill: document.getElementById("countPill"),
         resetBtn: document.getElementById("resetBtn"),
+        returnBtn: document.getElementById("returnBtn"),
         /*undoBtn: document.getElementById("undoBtn"),*/
         startLoc: document.getElementById("startLoc"),
         endLoc: document.getElementById("endLoc"),
@@ -902,9 +906,16 @@
           btn.addEventListener("click", () => {
             document.querySelectorAll(".msgCard.copied").forEach(el => el.classList.remove("copied"));
             card.classList.add("copied");
+
+            if(lastCopiedBtn && lastCopiedBtn !== btn){
+              lastCopiedBtn.textContent = "✓";
+              lastCopiedBtn.style.color = "#34d399";
+            }
+
             copyText(message.text);
             btn.textContent = "Copied!";
             btn.style.color = "#34d399";
+            lastCopiedBtn = btn;
           });
 
           top.appendChild(left);
@@ -924,6 +935,7 @@
           : "No selections yet.";
 
         UI.countPill.textContent = `${route.length} selected`;
+        if (UI.returnBtn) UI.returnBtn.disabled = route.length < 2;
         /*UI.undoBtn.disabled = route.length === 0;*/
 
         renderMessages(buildMessages(route));
@@ -996,7 +1008,25 @@
         updateUI();
       }
 
-      function undoLast(){
+      
+      function makeReturnTrip(){
+        // Reverse the current route order and swap first/last location inputs
+        if (route.length < 2) return;
+
+        // Swap the typed locations
+        const startVal = UI.startLoc?.value ?? "";
+        const endVal = UI.endLoc?.value ?? "";
+        if (UI.startLoc) UI.startLoc.value = endVal;
+        if (UI.endLoc) UI.endLoc.value = startVal;
+
+        // Reverse route selection order (preserves same hexes)
+        route = [...route].reverse();
+
+        setToast("");
+        updateUI();
+      }
+
+function undoLast(){
         route.pop();
         setToast("");
         updateUI();
@@ -1081,6 +1111,7 @@
          ========================= */
       function bindEvents(){
         UI.resetBtn.addEventListener("click", resetAll);
+        if (UI.returnBtn) UI.returnBtn.addEventListener("click", makeReturnTrip);
         /*UI.undoBtn.addEventListener("click", undoLast);*/
 
         UI.startLoc.addEventListener("input", updateUI);
