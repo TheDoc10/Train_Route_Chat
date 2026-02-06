@@ -162,15 +162,15 @@
       cursor: not-allowed;
     }
 
-	input[type="checkbox"]{
-  flex: 0 0 auto;
-  min-width: unset;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  margin: 0 4px 0 0;
-  accent-color: var(--text);
-}
+  	input[type="checkbox"]{
+      flex: 0 0 auto;
+      min-width: unset;
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      margin: 0 4px 0 0;
+      accent-color: var(--text);
+    }
 	
     input{
       background: var(--btn-bg);
@@ -217,6 +217,36 @@
       font-size: 13px;
       color: var(--route-text);
       line-height: 1.35;
+    }
+
+    .tooltip{
+      position: relative;
+      display: inline-block;
+      cursor: default;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .tooltip .tooltiptext{
+      visibility: hidden;
+      width: 220px;
+      background-color: var(--btn-bg);
+      border: 1px solid var(--btn-border);
+      text-align: left;
+      border-radius: 5px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 12px;
+    }
+
+    .tooltip:hover .tooltiptext{
+      visibility: visible;
+      opacity: 1;
     }
 
     /* =========================
@@ -320,12 +350,12 @@
 
 <body data-theme="dark">
   <h1>
-    CMRC Train Route Builder
+    ✚CMRC Train Route Builder
     <button id="themeToggle" type="button">Light mode</button>
   </h1>
 
   <p class="hint">
-    Click hexes in travel order. The first and last locations should be City names.
+    Click hexes in travel order. Clicking an already selected hex removes it, and any hexes beyond it in the route.
   </p>
 
   <div class="wrap">
@@ -334,44 +364,41 @@
       <div class="routeLine" id="routeLine">No selections yet.</div>
 
       <div class="row" style="margin-top:10px;">
-        <label class="small" for="startLoc" style="min-width:110px;">First location</label>
+        <label class="small" for="startLoc" style="min-width:60px;">First location</label>
+        <div class="tooltip">(?)<span class="tooltiptext">The first location the train will stop at, for example, "Seaport", "Depot", or sub-region town name.</span></div>
         <input id="startLoc" type="text" placeholder="Type first location…" />
       </div>
 
       <div class="row" style="margin-top:8px;">
-        <label class="small" for="endLoc" style="min-width:110px;">Last location</label>
+        <label class="small" for="endLoc" style="min-width:60px;">Last location</label>
+        <div class="tooltip">(?)<span class="tooltiptext">The last location the train will stop at, for example, "CMRC Facility", "Seaport", or sub-region town name.</span></div>
         <input id="endLoc" type="text" placeholder="Type last location…" />
       </div>
+      <div class="row" style="margin-top:8px;">
+        <!--<div class="row" style="gap:6px;">
+          <label class="small">Enabled?</label>
+          <input id="trainFlavorToggle" type="checkbox" checked />
+        </div>-->
+
+      <!--<div class="row" style="gap:6px; margin-left:18px;">
+        <label class="small">Random?</label>
+        <input id="trainFlavorRandom" type="checkbox" />
+      </div>-->
+
+      <div class="row flavorWrap" id="trainFlavorWrap" style="gap:6px;">
+        <label class="small flavorLabel" style="min-width:100px;">Train Flavor Text</label>
+        <select id="trainFlavorSelect" style="min-width:200px;"></select>
+      </div>
+</div> <!-- not sure how many tabs this one should have! -->
 
       <div class="row" style="margin-top:10px;">
-        <button id="undoBtn" disabled>Undo last</button>
+        <!--<button id="undoBtn" disabled>Undo last</button>-->
         <button id="resetBtn">Reset</button>
         <span class="pill" id="countPill">0 selected</span>
       </div>
 
       <div id="status" class="small" style="margin-top:10px;"></div>
       <div id="toast" class="toast"></div>
-
-      <hr>
-
-      <h2>Train Flavor</h2>
-
-<div class="row" style="margin-top:8px;">
-  <div class="row" style="gap:6px;">
-    <label class="small">Enabled?</label>
-    <input id="trainFlavorToggle" type="checkbox" checked />
-  </div>
-
-  <div class="row" style="gap:6px; margin-left:18px;">
-    <label class="small">Random?</label>
-    <input id="trainFlavorRandom" type="checkbox" />
-  </div>
-
-  <div class="row flavorWrap" id="trainFlavorWrap" style="gap:6px; margin-left:18px;">
-    <label class="small flavorLabel">Flavor</label>
-    <select id="trainFlavorSelect" style="min-width:200px;"></select>
-  </div>
-</div>
 
       <hr>
 
@@ -400,10 +427,11 @@
       const TRAIN_FLAVORS = [
         "Choo Choo!",
         "Chugga Chugga!",
-		"Mind the gap!",
-		"All aboard!",
-		"Doors closing!",
-		"Full steam ahead!"
+		    "Mind the gap!",
+		    "All aboard!",
+		    "Doors closing!",
+		    "Full steam ahead!",
+        "Toot Toot!"
 		
       ];
 
@@ -498,13 +526,13 @@
         status: document.getElementById("status"),
         countPill: document.getElementById("countPill"),
         resetBtn: document.getElementById("resetBtn"),
-        undoBtn: document.getElementById("undoBtn"),
+        /*undoBtn: document.getElementById("undoBtn"),*/
         startLoc: document.getElementById("startLoc"),
         endLoc: document.getElementById("endLoc"),
         themeToggle: document.getElementById("themeToggle"),
-        trainFlavorToggle: document.getElementById("trainFlavorToggle"),
+        /*trainFlavorToggle: document.getElementById("trainFlavorToggle"),*/
         trainFlavorSelect: document.getElementById("trainFlavorSelect"),
-        trainFlavorRandom: document.getElementById("trainFlavorRandom")
+        /*trainFlavorRandom: document.getElementById("trainFlavorRandom")*/
       };
 
       // This is where you adjust the margin on the map tiles inside the bounding box
@@ -560,6 +588,17 @@
          ========================= */
       function loadTrainFlavors(){
         UI.trainFlavorSelect.innerHTML = "";
+
+        const disabledFlavor = new Option("Disabled", "disabled", true, false);
+        const randomFlavor = new Option("Random", "random", true, false);
+        
+        UI.trainFlavorSelect.appendChild(disabledFlavor);
+        UI.trainFlavorSelect.appendChild(randomFlavor);
+
+        const flavorSeparator = new Option("──────────────────", "separator");
+        flavorSeparator.disabled = true;
+        UI.trainFlavorSelect.appendChild(flavorSeparator);
+
         for (const flavor of TRAIN_FLAVORS) {
           const opt = document.createElement("option");
           opt.value = flavor;
@@ -569,32 +608,48 @@
       }
 
       function applySavedFlavorSettings(){
-        const enabledSaved = localStorage.getItem(FLAVOR_ENABLED_KEY);
+        /*const enabledSaved = localStorage.getItem(FLAVOR_ENABLED_KEY);
         const enabled = (enabledSaved === null) ? true : (enabledSaved === "true");
-        UI.trainFlavorToggle.checked = enabled;
+        UI.trainFlavorToggle.checked = enabled;*/
 
-        const selectedSaved = localStorage.getItem(FLAVOR_SELECTED_KEY);
+        /*const selectedSaved = localStorage.getItem(FLAVOR_SELECTED_KEY);
         if (selectedSaved && TRAIN_FLAVORS.includes(selectedSaved)) {
           UI.trainFlavorSelect.value = selectedSaved;
         } else {
-          UI.trainFlavorSelect.value = TRAIN_FLAVORS[0] || "Choo Choo!";
-        }
+          UI.trainFlavorSelect.value = "random" || "Random";
+        }*/
 
-        const randomSaved = localStorage.getItem(FLAVOR_RANDOM_KEY);
-        UI.trainFlavorRandom.checked = (randomSaved === "true");
+        /*
+        Wasn't really sure how to keep this working properly or if it was really needed, so just made it always choose Random as a default option
+        */
+
+        UI.trainFlavorSelect.value = "random";
+
+        /*const randomSaved = localStorage.getItem(FLAVOR_RANDOM_KEY);
+        UI.trainFlavorRandom.checked = (randomSaved === "true");*/
       }
 
       function persistFlavorSettings(){
-        localStorage.setItem(FLAVOR_ENABLED_KEY, String(UI.trainFlavorToggle.checked));
+        /*localStorage.setItem(FLAVOR_ENABLED_KEY, String(UI.trainFlavorToggle.checked));*/
+        if(UI.trainFlavorSelect.value == "disabled"){
+          localStorage.setItem(FLAVOR_ENABLED_KEY, UI.trainFlavorSelect.value);
+        }
         localStorage.setItem(FLAVOR_SELECTED_KEY, UI.trainFlavorSelect.value || "");
-        localStorage.setItem(FLAVOR_RANDOM_KEY, String(UI.trainFlavorRandom.checked));
+        /*localStorage.setItem(FLAVOR_RANDOM_KEY, String(UI.trainFlavorRandom.checked));*/
+        if(UI.trainFlavorSelect.value == "random"){
+          localStorage.setItem(FLAVOR_RANDOM_KEY, UI.trainFlavorSelect.value);
+        }
       }
 
       function getFlavorSuffixForMessage(){
-        const flavorEnabled = Boolean(UI.trainFlavorToggle?.checked);
-        if (!flavorEnabled) return "";
+        /*const flavorEnabled = Boolean(UI.trainFlavorToggle?.checked);
+        if (!flavorEnabled) return "";*/
 
-        const useRandom = Boolean(UI.trainFlavorRandom?.checked);
+        const flavorDisabled = UI.trainFlavorSelect.value === "disabled";
+        if (flavorDisabled) return "";
+
+        /*const useRandom = Boolean(UI.trainFlavorRandom?.checked);*/
+        const useRandom = UI.trainFlavorSelect.value === "random";
         const list = Array.isArray(TRAIN_FLAVORS) ? TRAIN_FLAVORS : [];
         if (list.length === 0) return "";
 
@@ -690,27 +745,27 @@
         // Global message: first selected hex -> last selected hex
         messages.push({
           kind: "global",
-          text: `[✚CMRC] Train - ${routeArr[0].name} to ${routeArr[n - 1].name}${getFlavorSuffixForMessage()}`
+          text: `✚CMRC Train - ${routeArr[0].name} to ${routeArr[n - 1].name}${getFlavorSuffixForMessage()}`
         });
 
         // Message 1: "First location" input -> second selected hex
         messages.push({
           kind: "full",
-          text: `[✚CMRC] Train - ${startText || "First location"} to ${routeArr[1].name}${getFlavorSuffixForMessage()}`
+          text: `✚CMRC Train - ${startText || routeArr[0].name} to ${routeArr[1].name}${getFlavorSuffixForMessage()}`
         });
 
         // Messages 2..: maintain the existing "skip current" pattern: h(i) -> h(i+2)
         for (let i = 0; i <= n - 3; i++) {
           messages.push({
             kind: "full",
-            text: `[✚CMRC] Train - ${routeArr[i].name} to ${routeArr[i + 2].name}${getFlavorSuffixForMessage()}`
+            text: `✚CMRC Train - ${routeArr[i].name} to ${routeArr[i + 2].name}${getFlavorSuffixForMessage()}`
           });
         }
 
         // Final message: second-to-last selected hex -> "Last location" input
         messages.push({
           kind: "final",
-          text: `[✚CMRC] Train - ${routeArr[n - 2].name} to ${endText || "Last location"}${getFlavorSuffixForMessage()}`
+          text: `✚CMRC Train - ${routeArr[n - 2].name} to ${endText || routeArr[n-1].name}${getFlavorSuffixForMessage()}`
         });
 
         // Assign display step numbers (after construction, so numbering is consistent)
@@ -722,7 +777,7 @@
 
         try{
           await navigator.clipboard.writeText(text);
-          setToast("Copied!");
+          /*setToast("Copied!");*/
           return;
         }catch (_){ /* fallback */ }
 
@@ -765,7 +820,12 @@
 
           const meta = document.createElement("div");
           meta.className = "msgMeta";
-          meta.textContent = (message.kind === "global") ? "Global Logi" : `Message ${message.step - 1}`;
+          meta.textContent = (message.kind === "global") ? "Global Logi Message" : `Region Message ${message.step - 1}`;
+          if(message.kind == "global"){
+            meta.style.color = "#ffa959";
+          } else{
+            meta.style.color = "#6464c8";
+          }
 
           const text = document.createElement("div");
           text.className = "msgText";
@@ -780,6 +840,8 @@
             document.querySelectorAll(".msgCard.copied").forEach(el => el.classList.remove("copied"));
             card.classList.add("copied");
             copyText(message.text);
+            btn.textContent = "Copied!";
+            btn.style.color = "#34d399";
           });
 
           top.appendChild(left);
@@ -799,12 +861,12 @@
           : "No selections yet.";
 
         UI.countPill.textContent = `${route.length} selected`;
-        UI.undoBtn.disabled = route.length === 0;
+        /*UI.undoBtn.disabled = route.length === 0;*/
 
         renderMessages(buildMessages(route));
 
         // UX: when Random? is checked, the dropdown is informational only
-        if (UI.trainFlavorSelect && UI.trainFlavorRandom) {
+        /*if (UI.trainFlavorSelect && UI.trainFlavorRandom) {
           const randomOn = Boolean(UI.trainFlavorRandom.checked);
           UI.trainFlavorSelect.disabled = randomOn;
           UI.trainFlavorSelect.style.opacity = randomOn ? "0.7" : "1";
@@ -812,7 +874,7 @@
           // Strike-through visual when Random? is on (CSS handles label + select)
           const wrap = document.getElementById("trainFlavorWrap");
           if (wrap) wrap.classList.toggle("randomOn", randomOn);
-        }
+        }*/
 
         // Update hex selection styling & order numbers
         for (const g of UI.svg.querySelectorAll("g[data-id]")) {
@@ -842,11 +904,14 @@
         setToast("");
 
         if (routeContainsId(hex.id)) {
-          setToast(`Already selected (#${routeIndexOf(hex.id) + 1}). Use Undo/Reset to change the route.`, true);
-          return;
+          /*setToast(`Already selected (#${routeIndexOf(hex.id) + 1}). Use Undo/Reset to change the route.`, true);*/
+          const popCount = route.length-routeIndexOf(hex.id);
+          for(let i=0;i<popCount;i++){
+            route.pop();
+          }
+        } else{
+          route.push(hex);
         }
-
-        route.push(hex);
         updateUI();
       }
 
@@ -940,24 +1005,24 @@
          ========================= */
       function bindEvents(){
         UI.resetBtn.addEventListener("click", resetAll);
-        UI.undoBtn.addEventListener("click", undoLast);
+        /*UI.undoBtn.addEventListener("click", undoLast);*/
 
         UI.startLoc.addEventListener("input", updateUI);
         UI.endLoc.addEventListener("input", updateUI);
 
-        UI.trainFlavorToggle.addEventListener("change", () => {
+        /*UI.trainFlavorToggle.addEventListener("change", () => {
           persistFlavorSettings();
           updateUI();
-        });
+        });*/
         UI.trainFlavorSelect.addEventListener("change", () => {
           persistFlavorSettings();
           updateUI();
         });
 
-        UI.trainFlavorRandom.addEventListener("change", () => {
+        /*UI.trainFlavorRandom.addEventListener("change", () => {
           persistFlavorSettings();
           updateUI();
-        });
+        });*/
 
         if (UI.themeToggle) UI.themeToggle.addEventListener("click", toggleTheme);
       }
