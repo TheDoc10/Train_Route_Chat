@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CMRC Train Route Builder (v2) (v2)</title>
-	<link rel="icon" type="image/x-icon" href="/images/plus.ico">
+  <title>CMRC Train Route Builder</title>
+  <link rel="icon" type="image/png" href="images/health.png">
 
   <style>
     /* =========================
@@ -425,8 +425,9 @@
         <span class="pill" id="countPill">0 selected</span>
       </div>
 
-      <div id="status" class="small" style="margin-top:10px;"></div>
-      <div id="toast" class="toast"></div>
+      <div id="status" class="small" style="margin-top:10;"></div>
+		<div id="toast" class="toast"></div>
+
 
       <hr>
 
@@ -583,6 +584,7 @@
          ========================= */
       let hexes = []; // ordered list: {id, name, row, col}
       let route = []; // selection order: array of hex objects
+      let NEIGHBOR_DIST = null; // computed from current layout (center-to-center distance for side-adjacent hexes)
 
       /* =========================
          Theme
@@ -699,7 +701,7 @@
       /* =========================
          Hex layout helpers
          ========================= */
-      function layoutToPixel(col, row){
+      function layoutToPixel(row, col){
         // Pointy-top model: horizontal: sqrt(3) * size; vertical: 1.5 * size (tweakable here)
         const stepX = GEOMETRY.size * Math.sqrt(3) * GEOMETRY.stepXScale;
         const stepY = GEOMETRY.size * GEOMETRY.stepYScale;
@@ -729,6 +731,39 @@
 
       function routeContainsId(id){
         return routeIndexOf(id) !== -1;
+      }
+
+
+
+      // True if b is side-adjacent to a in our (row, col) "doubled column" coordinates.
+      // Neighbors: (r, c±2), (r±1, c±1)
+      function computeNeighborDistance(){
+        // Derive the "touching side" center-to-center distance from the current HEX_LAYOUT.
+        // This makes adjacency robust even if the grid is tweaked (stepXScale/stepYScale) or uses nonstandard row/col offsets.
+        let min = Infinity;
+        for (let i = 0; i < hexes.length; i++){
+          const a = layoutToPixel(hexes[i].row, hexes[i].col);
+          for (let j = i + 1; j < hexes.length; j++){
+            const b = layoutToPixel(hexes[j].row, hexes[j].col);
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            const d = Math.hypot(dx, dy);
+            if (d > 0.0001 && d < min) min = d;
+          }
+        }
+        return (min !== Infinity) ? min : 0;
+      }
+
+      function areSideNeighbors(a, b){
+        // Neighbor rule for this map's (row, col) lattice:
+        // From (r, c), the 6 side-adjacent neighbors are:
+        // (r-2, c), (r-1, c+1), (r+1, c+1), (r+2, c), (r+1, c-1), (r-1, c-1)
+        const dr = b.row - a.row;
+        const dc = b.col - a.col;
+        return (
+          (dc === 0 && (dr === 2 || dr === -2)) ||
+          (Math.abs(dc) === 1 && (dr === 1 || dr === -1))
+        );
       }
 
       /* =========================
@@ -931,18 +966,30 @@
       function onHexClick(hex){
         setToast("");
 
+        // If user clicks a previously-selected hex, remove it and everything beyond it.
+        // (This "rewind" behavior stays even when adjacency rules are enabled.)
         if (routeContainsId(hex.id)) {
-          /*setToast(`Already selected (#${routeIndexOf(hex.id) + 1}). Use Undo/Reset to change the route.`, true);*/
-          const popCount = route.length-routeIndexOf(hex.id);
+          const popCount = route.length - routeIndexOf(hex.id);
           for(let i=0;i<popCount;i++){
             route.pop();
           }
-        } else{
-          route.push(hex);
+          updateUI();
+          return;
         }
+
+        // Enforce: after the first selection, each new selection must touch (share a side with) the last selected hex.
+        if (route.length > 0){
+          const last = route[route.length - 1];
+          if (!areSideNeighbors(last, hex)){
+            setToast("Next hex must touch the last selected hex.", true);
+            updateUI();
+            return;
+          }
+        }
+
+        route.push(hex);
         updateUI();
       }
-
       function resetAll(){
         route = [];
         setToast("");
@@ -984,7 +1031,7 @@
         UI.svg.appendChild(hexLayer);
 
         for (const h of hexes) {
-          const p = layoutToPixel(h.col, h.row);
+          const p = layoutToPixel(h.row, h.col);
           const cx = GEOMETRY.origin.x + p.x;
           const cy = GEOMETRY.origin.y + p.y;
 
@@ -1025,6 +1072,7 @@
           row: pos.row,
           col: pos.col
         }));
+        NEIGHBOR_DIST = null;
         render();
       }
 
@@ -1064,5 +1112,3 @@
   </script>
 </body>
 </html>
-
-
