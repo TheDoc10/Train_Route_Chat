@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CMRC Train Route Builder</title>
+
+  <style>
+    /* =========================
+       Theme tokens
+       ========================= */
+    :root{
+      --border:#e3e3e3;
+      --muted:#666;
+
+      --bg:#ffffff;
+      --panel:#ffffff;
+      --text:#111111;
+      --mapbg:#fafafa;
+
+      --btn-bg:#ffffff;
+      --btn-border:#cccccc;
+
+      --pill-bg:#fafafa;
+      --pill-text:#333333;
+
+      --hr:#eeeeee;
+
+      --toast-ok:#0a7;
+      --toast-err:#c00;
+
+      --route-text:#111111;
+      --label:#111111;
+
+      --msg-card:#ffffff;
+      --copied-bg:#e6f7ec;
+      --copied-border:#86efac;
+
+      --hex-stroke:#bdbdbd;
+      --hex-stroke-selected:#111111;
+      --hex-fill: transparent;
+      --hex-fill-selected: rgba(233, 242, 255, 0.55);
+
+      --order-num:#d11;
+    }
+
+    body[data-theme="dark"]{
+      --border:#2a2a2a;
+      --muted:#a1a1aa;
+
+      --bg:#0b0b0f;
+      --panel:#121218;
+      --text:#eaeaf0;
+      --mapbg:#101017;
+
+      --btn-bg:#181824;
+      --btn-border:#2a2a2a;
+
+      --pill-bg:#151521;
+      --pill-text:#eaeaf0;
+
+      --hr:#242432;
+
+      --toast-ok:#34d399;
+      --toast-err:#fb7185;
+
+      --route-text:#eaeaf0;
+      --label:#eaeaf0;
+
+      --msg-card:#121218;
+
+      /* Copied highlight: slightly muted green for dark mode */
+      --copied-bg: rgba(134, 239, 172, 0.18);
+      --copied-border:#3aa165;
+
+      --hex-stroke:#3a3a45;
+      --hex-stroke-selected:#eaeaf0;
+      --hex-fill: transparent;
+      --hex-fill-selected: rgba(134, 239, 172, 0.12);
+
+      --order-num:#ff6b6b;
+    }
+
+    /* =========================
+       Base layout & typography
+       ========================= */
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      margin: 16px;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    h1{
+      font-size: 20px;
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .hint{
+      color: var(--muted);
+      margin: 0 0 12px;
+      line-height: 1.4;
+    }
+
+    .wrap{
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .panel{
+      width: 600px;
+      max-width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      background: var(--panel);
+    }
+
+    .panel h2{
+      font-size: 15px;
+      margin: 0 0 8px;
+    }
+
+    .row{
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .small{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    hr{
+      border: none;
+      border-top: 1px solid var(--hr);
+      margin: 12px 0;
+    }
+
+    /* =========================
+       Controls
+       ========================= */
+    button{
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--btn-border);
+      background: var(--btn-bg);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    button:disabled{
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    input{
+      background: var(--btn-bg);
+      color: var(--text);
+      border: 1px solid var(--btn-border);
+      outline: none;
+      padding: 10px 12px;
+      border-radius: 10px;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .pill{
+      display: inline-block;
+      padding: 2px 8px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--pill-text);
+      background: var(--pill-bg);
+    }
+
+    .toast{
+      margin-top: 10px;
+      min-height: 18px;
+      font-size: 13px;
+      color: var(--toast-ok);
+    }
+
+    .toast.err{ color: var(--toast-err); }
+
+    .routeLine{
+      font-size: 13px;
+      color: var(--route-text);
+      line-height: 1.35;
+    }
+
+    /* =========================
+       Map
+       ========================= */
+    .mapWrap{
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--mapbg);
+      width: 1050px;
+      height: 670px;
+    }
+
+    svg{ display: block; }
+    .hex{ cursor: pointer; }
+
+    .label{
+      pointer-events: none;
+      font-size: 12px;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      user-select: none;
+      fill: var(--label);
+    }
+
+    .orderNum{
+      pointer-events: none;
+      font-size: 14px;
+      font-weight: 700;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      user-select: none;
+      fill: var(--order-num);
+    }
+
+    .tracksOverlay{
+      pointer-events: none;
+      /*opacity: 0.90; */
+    }
+
+    body[data-theme="dark"] .tracksOverlay{
+      filter: invert(1) brightness(0.9) contrast(1.1);
+    }
+
+    /* =========================
+       Messages list
+       ========================= */
+    .msgList{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .msgCard{
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      background: var(--msg-card);
+      transition: background-color .18s ease, border-color .18s ease;
+    }
+
+    .msgCard.copied{
+      background: var(--copied-bg);
+      border-color: var(--copied-border);
+    }
+
+    .msgTop{
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .msgText{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12.5px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .msgMeta{
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+
+<body data-theme="dark">
+  <h1>
+    CMRC Train Route Builder
+    <button id="themeToggle" type="button">Light mode</button>
+  </h1>
+
+  <p class="hint">
+    Click hexes in travel order. The first and last locations should be City names.
+  </p>
+
+  <div class="wrap">
+    <div class="panel">
+      <h2>Route</h2>
+      <div class="routeLine" id="routeLine">No selections yet.</div>
+
+      <div class="row" style="margin-top:10px;">
+        <label class="small" for="startLoc" style="min-width:110px;">First location</label>
+        <input id="startLoc" type="text" placeholder="Type first location…" />
+      </div>
+
+      <div class="row" style="margin-top:8px;">
+        <label class="small" for="endLoc" style="min-width:110px;">Last location</label>
+        <input id="endLoc" type="text" placeholder="Type last location…" />
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <button id="undoBtn" disabled>Undo last</button>
+        <button id="resetBtn">Reset</button>
+        <span class="pill" id="countPill">0 selected</span>
+      </div>
+
+      <div id="status" class="small" style="margin-top:10px;"></div>
+      <div id="toast" class="toast"></div>
+
+      <hr>
+
+      <h2>Messages to post (in order)</h2>
+      <div class="small" style="margin-bottom:8px;">Copy messages shown in order.</div>
+      <div id="msgList" class="msgList"></div>
+    </div>
+
+    <div>
+      <div class="mapWrap">
+        <svg id="map" width="1040" height="700" viewBox="0 0 1040 700" aria-label="hex map"></svg>
+      </div>
+      <div class="small" style="margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      /* =========================
+         Configuration
+         ========================= */
+
+      // Background tracks image overlay (edit these to align)
+      // Put your image at: ./images/tracks2.png  (relative to this HTML file)
+      const TRACKS_OVERLAY = {
+        href: "images/tracks2.png",
+        x: 100,        // move left/right (SVG units)
+        y: -19,        // move up/down (SVG units)
+        width: 1040,   // scale image width
+        height: 700,   // scale image height
+        //opacity: 0.90
+      };
+
+      /**
+       * Layout positions (row, col) in the intended grid.
+       * These are used directly for placement (not alphabetical order, not array index order).
+       */
+      const HEX_LAYOUT = [
+  { name: "Basin Sionnach", row: 0, col: 6 },
+
+  { name: "Speaking Woods", row: 1, col: 5 },
+  { name: "Howl County", row: 1, col: 7 },
+
+  { name: "Kuura Strand", row: 2, col: 2 },
+  { name: "Callum's Cape", row: 2, col: 4 },
+  { name: "Reaching Trail", row: 2, col: 6 },
+  { name: "Clanshead Valley", row: 2, col: 8 },
+
+  { name: "Pari Peak", row: 3, col: 1 },
+  { name: "Nevish Line", row: 3, col: 3 },
+  { name: "The Moors", row: 3, col: 5 },
+  { name: "Viper Pit", row: 3, col: 7 },
+  { name: "Morgen's Crossing", row: 3, col: 9 },
+
+  { name: "Olavi's Wake", row: 4, col: 0 },
+  { name: "The Gutter", row: 4, col: 2 },
+  { name: "Stonecradle", row: 4, col: 4 },
+  { name: "Callahan's Passage", row: 4, col: 6 },
+  { name: "Weathered Expanse", row: 4, col: 8 },
+  { name: "Godcrofts", row: 4, col: 10 },
+
+  { name: "Palantine Berm", row: 5, col: 1 },
+  { name: "Farranac Coast", row: 5, col: 3 },
+  { name: "Marban Hollow", row: 5, col: 7 },
+  { name: "Stlican Shelf", row: 5, col: 9 },
+  { name: "Lykos Isle", row: 5, col: 11 },
+
+  { name: "Fisherman's Row", row: 6, col: 2 },
+  { name: "Linn of Mercy", row: 5, col: 5 }, // was "The Linn of Mercy"
+  { name: "Deadlands", row: 6, col: 6 },
+  { name: "The Clahstra", row: 6, col: 8 },
+  { name: "Tempest Island", row: 6, col: 10 },
+
+  { name: "Oarbreaker Isles", row: 7, col: 1 }, // was "The Oarbreaker Isles"
+  { name: "Westgate", row: 7, col: 3 },
+  { name: "Loch Mór", row: 7, col: 5 },
+  { name: "King's Cage", row: 6, col: 4 },
+  { name: "Drowned Vale", row: 7, col: 7 }, // was "The Drowned Vale"
+  { name: "Endless Shore", row: 7, col: 9 },
+  { name: "The Fingers", row: 7, col: 11 },
+
+  { name: "Stema Landing", row: 8, col: 2 },
+  { name: "Sableport", row: 8, col: 4 },
+  { name: "Umbral Wildwood", row: 8, col: 6 },
+  { name: "Allod's Bight", row: 8, col: 8 },
+  { name: "Wresfa", row: 8, col: 10 },
+  { name: "Piper's Enclave", row: 8, col: 12 },
+
+  { name: "Origin", row: 9, col: 3 },
+  { name: "The Heartlands", row: 9, col: 5 },
+  { name: "Shackled Chasm", row: 9, col: 7 },
+  { name: "Reaver's Pass", row: 9, col: 9 },
+  { name: "Tyrant Foothills", row: 9, col: 11 },
+
+  { name: "Ash Fields", row: 10, col: 4 },
+  { name: "Great March", row: 10, col: 6 },
+  { name: "Terminus", row: 10, col: 8 },
+  { name: "Onyx", row: 10, col: 10 },
+
+  { name: "Red River", row: 11, col: 5 },
+  { name: "Acrithia", row: 11, col: 7 },
+
+  { name: "Kalokai", row: 12, col: 6 },
+];
+
+
+
+
+      const UI = {
+        svg: document.getElementById("map"),
+        routeLine: document.getElementById("routeLine"),
+        msgList: document.getElementById("msgList"),
+        toast: document.getElementById("toast"),
+        status: document.getElementById("status"),
+        countPill: document.getElementById("countPill"),
+        resetBtn: document.getElementById("resetBtn"),
+        undoBtn: document.getElementById("undoBtn"),
+        startLoc: document.getElementById("startLoc"),
+        endLoc: document.getElementById("endLoc"),
+        themeToggle: document.getElementById("themeToggle")
+      };
+
+		// This is where you adjust the margin on the map tiles insode the bounding box
+      const GEOMETRY = {
+        size: 48,            // hex radius
+        origin: { x: 0, y: 50 },
+        // Layout spacing tweaks:
+        // Increase stepX to spread columns, increase stepY to spread rows.
+        stepXScale: 1.8,
+        stepYScale: 0.9
+      };
+
+      const THEME_STORAGE_KEY = "cmrcTheme"; // default: dark
+
+      /* =========================
+         State
+         ========================= */
+
+      let hexes = []; // ordered list: {id, name, row, col}
+      let route = []; // selection order: array of hex objects
+
+      /* =========================
+         Theme
+         ========================= */
+
+      function applyTheme(mode){
+        if (mode === "dark") {
+          document.body.setAttribute("data-theme", "dark");
+          if (UI.themeToggle) UI.themeToggle.textContent = "Light mode";
+          return;
+        }
+
+        document.body.removeAttribute("data-theme");
+        if (UI.themeToggle) UI.themeToggle.textContent = "Dark mode";
+      }
+
+      function getInitialTheme(){
+        const saved = localStorage.getItem(THEME_STORAGE_KEY);
+        return (saved === "dark" || saved === "light") ? saved : "dark";
+      }
+
+      function toggleTheme(){
+        const isDark = document.body.getAttribute("data-theme") === "dark";
+        const next = isDark ? "light" : "dark";
+        localStorage.setItem(THEME_STORAGE_KEY, next);
+        applyTheme(next);
+        updateUI();
+      }
+
+      /* =========================
+         Toast
+         ========================= */
+
+      function setToast(message, isError = false){
+        UI.toast.textContent = message || "";
+        UI.toast.classList.toggle("err", Boolean(isError));
+      }
+
+      /* =========================
+         Hex layout helpers
+         ========================= */
+
+      function layoutToPixel(col, row){
+        // Pointy-top model: horizontal: sqrt(3) * size; vertical: 1.5 * size (tweakable here)
+        const stepX = GEOMETRY.size * Math.sqrt(3) * GEOMETRY.stepXScale;
+        const stepY = GEOMETRY.size * GEOMETRY.stepYScale;
+
+        // HEX_LAYOUT uses "doubled columns" where odd rows are already half-offset.
+        // Apply a base half-step shift to keep lattice centered.
+        const x = stepX * (col / 2 + 0.5);
+        const y = stepY * (row + 0.5);
+
+        return { x, y };
+      }
+
+      function hexPoints(cx, cy){
+        const pts = [];
+        for (let i = 0; i < 6; i++) {
+          const angle = (Math.PI / 180) * (60 * i - 30 + 90); // rotate 90°
+          const x = cx + GEOMETRY.size * Math.cos(angle);
+          const y = cy + GEOMETRY.size * Math.sin(angle);
+          pts.push(`${x.toFixed(2)},${y.toFixed(2)}`);
+        }
+        return pts.join(" ");
+      }
+
+      function routeIndexOf(id){
+        return route.findIndex(h => h.id === id);
+      }
+
+      function routeContainsId(id){
+        return routeIndexOf(id) !== -1;
+      }
+
+      /* =========================
+         Labels
+         ========================= */
+
+      /**
+       * Wrap label text into multiple lines (tspans) so it stays within the hex.
+       */
+      function setWrappedLabel(textEl, labelText){
+        while (textEl.firstChild) textEl.removeChild(textEl.firstChild);
+
+        const words = String(labelText).split(/\s+/).filter(Boolean);
+
+        const MAX_LINES = 3;
+        const lines = words.slice(0, MAX_LINES);
+        if (words.length > MAX_LINES) lines[MAX_LINES - 1] += "…";
+
+        const lineHeight = 14;
+        const totalHeight = lineHeight * (lines.length - 1);
+        const startDy = -totalHeight / 2;
+
+        lines.forEach((word, i) => {
+          const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+          tspan.setAttribute("x", textEl.getAttribute("x"));
+          tspan.setAttribute("dy", i === 0 ? startDy : lineHeight);
+          tspan.textContent = word;
+          textEl.appendChild(tspan);
+        });
+      }
+
+      /* =========================
+         Messages
+         ========================= */
+
+      function buildMessages(routeArr){
+        const n = routeArr.length;
+        if (n < 2) return [];
+
+        const startText = (UI.startLoc?.value || "").trim();
+        const endText = (UI.endLoc?.value || "").trim();
+
+        const messages = [];
+
+        // Global message: first selected hex -> last selected hex
+        messages.push({
+          kind: "global",
+          text: `[✚CMRC] Train - ${routeArr[0].name} to ${routeArr[n - 1].name} - Choo Choo!`
+        });
+
+        // Message 1: "First location" input -> second selected hex
+        messages.push({
+          kind: "full",
+          text: `[✚CMRC] Train - ${startText || "First location"} to ${routeArr[1].name} - Choo Choo!`
+        });
+
+        // Messages 2..: maintain the existing "skip current" pattern: h(i) -> h(i+2)
+        for (let i = 0; i <= n - 3; i++) {
+          messages.push({
+            kind: "full",
+            text: `[✚CMRC] Train - ${routeArr[i].name} to ${routeArr[i + 2].name} - Choo Choo!`
+          });
+        }
+
+        // Final message: second-to-last selected hex -> "Last location" input
+        messages.push({
+          kind: "final",
+          text: `[✚CMRC] Train - ${routeArr[n - 2].name} to ${endText || "Last location"} - Choo Choo!`
+        });
+
+        // Assign display step numbers (after construction, so numbering is consistent)
+        return messages.map((m, idx) => ({ ...m, step: idx + 1 }));
+      }
+
+      async function copyText(text){
+        setToast("");
+
+        try{
+          await navigator.clipboard.writeText(text);
+          setToast("Copied!");
+          return;
+        }catch (_){ /* fallback */ }
+
+        try{
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.left = "-9999px";
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          const ok = document.execCommand("copy");
+          document.body.removeChild(ta);
+          setToast(ok ? "Copied!" : "Copy blocked by browser. Select and copy manually.", !ok);
+        }catch (_e){
+          setToast("Copy blocked by browser. Select and copy manually.", true);
+        }
+      }
+
+      function renderMessages(messages){
+        UI.msgList.innerHTML = "";
+
+        if (messages.length === 0) {
+          const div = document.createElement("div");
+          div.className = "small";
+          div.textContent = "Select at least 2 hexes to generate messages.";
+          UI.msgList.appendChild(div);
+          return;
+        }
+
+        for (const message of messages) {
+          const card = document.createElement("div");
+          card.className = "msgCard";
+
+          const top = document.createElement("div");
+          top.className = "msgTop";
+
+          const left = document.createElement("div");
+          left.style.flex = "1";
+
+          const meta = document.createElement("div");
+          meta.className = "msgMeta";
+          meta.textContent = (message.kind === "global") ? "Global Logi" : `Message ${message.step}`;
+
+          const text = document.createElement("div");
+          text.className = "msgText";
+          text.textContent = message.text;
+
+          left.appendChild(meta);
+          left.appendChild(text);
+
+          const btn = document.createElement("button");
+          btn.textContent = "Copy";
+          btn.addEventListener("click", () => {
+            document.querySelectorAll(".msgCard.copied").forEach(el => el.classList.remove("copied"));
+            card.classList.add("copied");
+            copyText(message.text);
+          });
+
+          top.appendChild(left);
+          top.appendChild(btn);
+
+          card.appendChild(top);
+          UI.msgList.appendChild(card);
+        }
+      }
+
+      /* =========================
+         UI updates
+         ========================= */
+
+      function updateUI(){
+        UI.routeLine.textContent = route.length
+          ? route.map((h, idx) => `${idx + 1}. ${h.name}`).join("  →  ")
+          : "No selections yet.";
+
+        UI.countPill.textContent = `${route.length} selected`;
+        UI.undoBtn.disabled = route.length === 0;
+
+        renderMessages(buildMessages(route));
+
+        // Update hex selection styling & order numbers
+        for (const g of UI.svg.querySelectorAll("g[data-id]")) {
+          const id = g.getAttribute("data-id");
+          const poly = g.querySelector("polygon");
+          const orderEl = g.querySelector("text.orderNum");
+
+          poly.style.stroke = "var(--hex-stroke)";
+          poly.style.strokeWidth = "2";
+          poly.style.fill = "var(--hex-fill)";
+          if (orderEl) orderEl.textContent = "";
+
+          const idx = routeIndexOf(id);
+          if (idx !== -1) {
+            poly.style.stroke = "var(--hex-stroke-selected)";
+            poly.style.strokeWidth = "3";
+            poly.style.fill = "var(--hex-fill-selected)";
+            if (orderEl) orderEl.textContent = String(idx + 1);
+          }
+        }
+      }
+
+      /* =========================
+         Rendering
+         ========================= */
+
+      function onHexClick(hex){
+        setToast("");
+
+        if (routeContainsId(hex.id)) {
+          setToast(`Already selected (#${routeIndexOf(hex.id) + 1}). Use Undo/Reset to change the route.`, true);
+          return;
+        }
+
+        route.push(hex);
+        updateUI();
+      }
+
+      function resetAll(){
+        route = [];
+        setToast("");
+        updateUI();
+      }
+
+      function undoLast(){
+        route.pop();
+        setToast("");
+        updateUI();
+      }
+
+      function render(){
+        UI.svg.innerHTML = "";
+
+        // Background image overlay (behind hexes)
+        const bgLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        bgLayer.setAttribute("id", "bgLayer");
+        UI.svg.appendChild(bgLayer);
+
+		/*
+        const img = document.createElementNS("http://www.w3.org/2000/svg", "image");
+        img.setAttribute("href", TRACKS_OVERLAY.href);
+        img.setAttributeNS("http://www.w3.org/1999/xlink", "href", TRACKS_OVERLAY.href); // older SVG impls
+        img.setAttribute("x", TRACKS_OVERLAY.x);
+        img.setAttribute("y", TRACKS_OVERLAY.y);
+        img.setAttribute("width", TRACKS_OVERLAY.width);
+        img.setAttribute("height", TRACKS_OVERLAY.height);
+        img.setAttribute("preserveAspectRatio", "xMinYMin meet");
+        img.setAttribute("class", "tracksOverlay");
+        img.style.opacity = String(TRACKS_OVERLAY.opacity ?? 0.45);
+        img.style.pointerEvents = "none";
+        bgLayer.appendChild(img);
+		*/
+
+        // Hex layer (clickable)
+        const hexLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        hexLayer.setAttribute("id", "hexLayer");
+        UI.svg.appendChild(hexLayer);
+
+        for (const h of hexes) {
+          const p = layoutToPixel(h.col, h.row);
+          const cx = GEOMETRY.origin.x + p.x;
+          const cy = GEOMETRY.origin.y + p.y;
+
+          const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          g.setAttribute("data-id", h.id);
+
+          const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+          poly.setAttribute("points", hexPoints(cx, cy));
+          poly.setAttribute("class", "hex");
+
+          const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          label.setAttribute("x", cx);
+          label.setAttribute("y", cy);
+          label.setAttribute("class", "label");
+          setWrappedLabel(label, h.name);
+
+          const order = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          order.setAttribute("x", cx);
+          order.setAttribute("y", cy - GEOMETRY.size * 0.55);
+          order.setAttribute("class", "orderNum");
+
+          g.appendChild(poly);
+          g.appendChild(label);
+          g.appendChild(order);
+
+          g.addEventListener("click", () => onHexClick(h));
+          hexLayer.appendChild(g);
+        }
+
+        updateUI();
+      }
+
+      function loadHexes(){
+        UI.status.textContent = "";
+        hexes = HEX_LAYOUT.map(pos => ({
+          id: `layout_${pos.name}`,
+          name: pos.name,
+          row: pos.row,
+          col: pos.col
+        }));
+        render();
+      }
+
+      /* =========================
+         Boot
+         ========================= */
+
+      function bindEvents(){
+        UI.resetBtn.addEventListener("click", resetAll);
+        UI.undoBtn.addEventListener("click", undoLast);
+
+        UI.startLoc.addEventListener("input", updateUI);
+        UI.endLoc.addEventListener("input", updateUI);
+
+        if (UI.themeToggle) UI.themeToggle.addEventListener("click", toggleTheme);
+      }
+
+      applyTheme(getInitialTheme());
+      bindEvents();
+      loadHexes();
+    })();
+  </script>
+</body>
+</html>
