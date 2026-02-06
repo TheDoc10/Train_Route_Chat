@@ -206,8 +206,8 @@
       border-radius: 12px;
       overflow: hidden;
       background: var(--mapbg);
-      width: 1050px;
-      height: 670px;
+      width: 1230px;
+      height: 760px;
     }
 
     svg{ display: block; }
@@ -215,11 +215,12 @@
 
     .label{
       pointer-events: none;
-      font-size: 12px;
+      font-size: 14px;
       text-anchor: middle;
       dominant-baseline: middle;
       user-select: none;
       fill: var(--label);
+	  line-height: 12;
     }
 
     .orderNum{
@@ -328,7 +329,7 @@
 
     <div>
       <div class="mapWrap">
-        <svg id="map" width="1040" height="700" viewBox="0 0 1040 700" aria-label="hex map"></svg>
+        <svg id="map" width="1240" height="750" viewBox="0 0 1240 750" aria-label="hex map"></svg>
       </div>
       <div class="small" style="margin-top:8px;"></div>
     </div>
@@ -444,7 +445,7 @@
 
 		// This is where you adjust the margin on the map tiles insode the bounding box
       const GEOMETRY = {
-        size: 48,            // hex radius
+        size: 56,            // hex radius
         origin: { x: 0, y: 50 },
         // Layout spacing tweaks:
         // Increase stepX to spread columns, increase stepY to spread rows.
@@ -654,7 +655,7 @@
 
           const meta = document.createElement("div");
           meta.className = "msgMeta";
-          meta.textContent = (message.kind === "global") ? "Global Logi" : `Message ${message.step}`;
+          meta.textContent = (message.kind === "global") ? "Global Logi" : `Message ${message.step -1}`;
 
           const text = document.createElement("div");
           text.className = "msgText";
