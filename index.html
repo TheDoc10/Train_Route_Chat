@@ -220,34 +220,61 @@
     }
 
     .tooltip{
-      position: relative;
-      display: inline-block;
-      cursor: default;
-      color: var(--muted);
-      font-size: 16px;
-    }
-
-    .tooltip .tooltiptext{
-      visibility: hidden;
-      width: 220px;
-      background-color: var(--btn-bg);
-      border: 1px solid var(--btn-border);
-      text-align: left;
-      border-radius: 5px;
-      padding: 5px;
-      position: absolute;
-      z-index: 1;
-      bottom: 125%;
-      left: 50%;
-      opacity: 0;
-      transition: opacity 0.3s;
-      font-size: 12px;
-    }
-
-    .tooltip:hover .tooltiptext{
-      visibility: visible;
-      opacity: 1;
-    }
+	  position: relative;
+	  display: inline-flex;
+	  align-items: center;
+	  justify-content: center;
+	  width: 16px;
+	  height: 16px;
+	  border-radius: 999px;
+	  border: 1px solid var(--btn-border);
+	  background: var(--btn-bg);
+	  color: var(--muted);
+	  font-size: 11px;
+	  line-height: 1;
+	  cursor: help;
+	  user-select: none;
+	}
+	
+	.tooltip:hover{
+	  color: var(--text);
+	  border-color: var(--btn-border);
+	}
+	
+	.tooltip .tooltiptext{
+	  visibility: hidden;
+	  opacity: 0;
+	  transition: opacity 0.15s ease, transform 0.15s ease;
+	  transform: translateY(4px);
+	
+	  width: 240px;
+	  background: var(--panel);
+	  border: 1px solid var(--border);
+	  color: var(--text);
+	  border-radius: 12px;
+	  padding: 10px 12px;
+	
+	  position: absolute;
+	  z-index: 10;
+	
+	  /* anchor bottom-left of tooltip to top-right of icon */
+	  left: 100%;
+	  bottom: 100%;
+	  margin-left: 8px;
+	  margin-bottom: 8px;
+	
+	  font-size: 12px;
+	  line-height: 1.35;
+	  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+	
+	  pointer-events: none;
+	}
+	
+	.tooltip:hover .tooltiptext{
+	  visibility: visible;
+	  opacity: 1;
+	  transform: translateY(0px);
+	}
 
     /* =========================
        Map
@@ -365,13 +392,13 @@
 
       <div class="row" style="margin-top:10px;">
         <label class="small" for="startLoc" style="min-width:60px;">First location</label>
-        <div class="tooltip">(?)<span class="tooltiptext">The first location the train will stop at, for example, "Seaport", "Depot", or sub-region town name.</span></div>
+        <div class="tooltip">?<span class="tooltiptext">The first location the train will stop at, for example, "Seaport", "Depot", or sub-region town name.</span></div>
         <input id="startLoc" type="text" placeholder="Type first location…" />
       </div>
 
       <div class="row" style="margin-top:8px;">
         <label class="small" for="endLoc" style="min-width:60px;">Last location</label>
-        <div class="tooltip">(?)<span class="tooltiptext">The last location the train will stop at, for example, "CMRC Facility", "Seaport", or sub-region town name.</span></div>
+        <div class="tooltip">?<span class="tooltiptext">The last location the train will stop at, for example, "CMRC Facility", "Seaport", or sub-region town name.</span></div>
         <input id="endLoc" type="text" placeholder="Type last location…" />
       </div>
       <div class="row" style="margin-top:8px;">
@@ -1036,3 +1063,4 @@
   </script>
 </body>
 </html>
+
