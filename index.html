@@ -345,19 +345,12 @@
       text-decoration: line-through; /* may vary by browser */
     }
 
-    .separator-option{
-      background-color: #f0f0f0;
-      border-top: 1px solid #ddd;
-      color: transparent;
-      pointer-events: none;
-    }
-
   </style>
 </head>
 
 <body data-theme="dark">
   <h1>
-    CMRC Train Route Builder
+    ✚CMRC Train Route Builder
     <button id="themeToggle" type="button">Light mode</button>
   </h1>
 
@@ -381,20 +374,6 @@
         <div class="tooltip">(?)<span class="tooltiptext">The last location the train will stop at, for example, "CMRC Facility", "Seaport", or sub-region town name.</span></div>
         <input id="endLoc" type="text" placeholder="Type last location…" />
       </div>
-
-      <div class="row" style="margin-top:10px;">
-        <!--<button id="undoBtn" disabled>Undo last</button>-->
-        <button id="resetBtn">Reset</button>
-        <span class="pill" id="countPill">0 selected</span>
-      </div>
-
-      <div id="status" class="small" style="margin-top:10px;"></div>
-      <div id="toast" class="toast"></div>
-
-      <hr>
-
-      <h2>Train Flavor</h2>
-
       <div class="row" style="margin-top:8px;">
         <!--<div class="row" style="gap:6px;">
           <label class="small">Enabled?</label>
@@ -406,11 +385,20 @@
         <input id="trainFlavorRandom" type="checkbox" />
       </div>-->
 
-      <div class="row flavorWrap" id="trainFlavorWrap" style="gap:6px; margin-left:18px;">
-        <label class="small flavorLabel">Flavor</label>
+      <div class="row flavorWrap" id="trainFlavorWrap" style="gap:6px;">
+        <label class="small flavorLabel" style="min-width:100px;">Train Flavor Text</label>
         <select id="trainFlavorSelect" style="min-width:200px;"></select>
       </div>
 </div> <!-- not sure how many tabs this one should have! -->
+
+      <div class="row" style="margin-top:10px;">
+        <!--<button id="undoBtn" disabled>Undo last</button>-->
+        <button id="resetBtn">Reset</button>
+        <span class="pill" id="countPill">0 selected</span>
+      </div>
+
+      <div id="status" class="small" style="margin-top:10px;"></div>
+      <div id="toast" class="toast"></div>
 
       <hr>
 
@@ -757,27 +745,27 @@
         // Global message: first selected hex -> last selected hex
         messages.push({
           kind: "global",
-          text: `[✚CMRC] Train - ${routeArr[0].name} to ${routeArr[n - 1].name}${getFlavorSuffixForMessage()}`
+          text: `✚CMRC Train - ${routeArr[0].name} to ${routeArr[n - 1].name}${getFlavorSuffixForMessage()}`
         });
 
         // Message 1: "First location" input -> second selected hex
         messages.push({
           kind: "full",
-          text: `[✚CMRC] Train - ${startText || routeArr[0].name} to ${routeArr[1].name}${getFlavorSuffixForMessage()}`
+          text: `✚CMRC Train - ${startText || routeArr[0].name} to ${routeArr[1].name}${getFlavorSuffixForMessage()}`
         });
 
         // Messages 2..: maintain the existing "skip current" pattern: h(i) -> h(i+2)
         for (let i = 0; i <= n - 3; i++) {
           messages.push({
             kind: "full",
-            text: `[✚CMRC] Train - ${routeArr[i].name} to ${routeArr[i + 2].name}${getFlavorSuffixForMessage()}`
+            text: `✚CMRC Train - ${routeArr[i].name} to ${routeArr[i + 2].name}${getFlavorSuffixForMessage()}`
           });
         }
 
         // Final message: second-to-last selected hex -> "Last location" input
         messages.push({
           kind: "final",
-          text: `[✚CMRC] Train - ${routeArr[n - 2].name} to ${endText || routeArr[n-1].name}${getFlavorSuffixForMessage()}`
+          text: `✚CMRC Train - ${routeArr[n - 2].name} to ${endText || routeArr[n-1].name}${getFlavorSuffixForMessage()}`
         });
 
         // Assign display step numbers (after construction, so numbering is consistent)
@@ -789,7 +777,7 @@
 
         try{
           await navigator.clipboard.writeText(text);
-          setToast("Copied!");
+          /*setToast("Copied!");*/
           return;
         }catch (_){ /* fallback */ }
 
@@ -832,7 +820,12 @@
 
           const meta = document.createElement("div");
           meta.className = "msgMeta";
-          meta.textContent = (message.kind === "global") ? "Global Logi" : `Message ${message.step - 1}`;
+          meta.textContent = (message.kind === "global") ? "Global Logi Message" : `Region Message ${message.step - 1}`;
+          if(message.kind == "global"){
+            meta.style.color = "#ffa959";
+          } else{
+            meta.style.color = "#6464c8";
+          }
 
           const text = document.createElement("div");
           text.className = "msgText";
@@ -847,6 +840,8 @@
             document.querySelectorAll(".msgCard.copied").forEach(el => el.classList.remove("copied"));
             card.classList.add("copied");
             copyText(message.text);
+            btn.textContent = "Copied!";
+            btn.style.color = "#34d399";
           });
 
           top.appendChild(left);
