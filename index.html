@@ -812,27 +812,27 @@ const UI = {
         // Global message: first selected hex -> last selected hex
         messages.push({
           kind: "global",
-          text: `✚CMRC Train - ${routeArr[0].name} to ${routeArr[n - 1].name}${getFlavorSuffixForMessage()}`
+          text: `+CMRC Train - ${routeArr[0].name} to ${routeArr[n - 1].name}${getFlavorSuffixForMessage()}`
         });
 
         // Message 1: "First location" input -> second selected hex
         messages.push({
           kind: "full",
-          text: `✚CMRC Train - ${startText || routeArr[0].name} to ${routeArr[1].name}${getFlavorSuffixForMessage()}`
+          text: `+CMRC Train - ${startText || routeArr[0].name} to ${routeArr[1].name}${getFlavorSuffixForMessage()}`
         });
 
         // Messages 2..: maintain the existing "skip current" pattern: h(i) -> h(i+2)
         for (let i = 0; i <= n - 3; i++) {
           messages.push({
             kind: "full",
-            text: `✚CMRC Train - ${routeArr[i].name} to ${routeArr[i + 2].name}${getFlavorSuffixForMessage()}`
+            text: `+CMRC Train - ${routeArr[i].name} to ${routeArr[i + 2].name}${getFlavorSuffixForMessage()}`
           });
         }
 
         // Final message: second-to-last selected hex -> "Last location" input
         messages.push({
           kind: "final",
-          text: `✚CMRC Train - ${routeArr[n - 2].name} to ${endText || routeArr[n-1].name}${getFlavorSuffixForMessage()}`
+          text: `+CMRC Train - ${routeArr[n - 2].name} to ${endText || routeArr[n-1].name}${getFlavorSuffixForMessage()}`
         });
 
         // Assign display step numbers (after construction, so numbering is consistent)
@@ -1143,5 +1143,6 @@ function undoLast(){
   </script>
 </body>
 </html>
+
 
 
